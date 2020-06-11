@@ -1,0 +1,18 @@
+# kfk 发布器配置
+# 配置说明
+# alias 别名
+# brokers 集群节点列表
+# sync 同步使用还是异步使用
+# wait_ack 0=不需要ack, 1=当前节点ack即可,-1=需要所有同步节点ack
+# async_succ_log = true 表示在异步发送消息时候是否要写日志
+
+-
+  alias: default
+  brokers:
+    - 192.168.101.23:19092
+    - 192.168.101.23:29092
+  sync: true
+  wait_ack: 0
+  succ_log: false
+  debug: true
+
