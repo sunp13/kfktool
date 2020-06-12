@@ -46,7 +46,7 @@ func (p *MyProducter) Dial() error {
 		if err != nil {
 			return err
 		}
-		p.log = NewLogger("./", p.Alias)
+		p.log = NewLogger("", p.Alias, true, "only_console")
 		p.log.debug = p.Debug
 		p.SyncProducter = producer
 	} else {
@@ -60,24 +60,17 @@ func (p *MyProducter) Dial() error {
 		p.AsyncProducer = producer
 
 		// 默认日志接收器
-		p.log = NewLogger("./", p.Alias)
+		p.log = NewLogger("", p.Alias, true, "only_console")
 		p.log.debug = p.Debug
+
 		// 如果创建完成异步发送器后 需要对日志进行收集
 		go func(mp *MyProducter) {
 			for {
 				select {
 				case succMsg := <-p.AsyncProducer.Successes():
-					if p.log.newer {
-						p.log.PInfo("publish succ at %d partition %d offset text %s", succMsg.Partition, succMsg.Offset, succMsg.Value)
-					} else {
-						p.log.Ptrace("publish succ at %d partition %d offset text %s", succMsg.Partition, succMsg.Offset, succMsg.Value)
-					}
+					p.log.PInfo("publish succ at %d partition %d offset text %s", succMsg.Partition, succMsg.Offset, succMsg.Value)
 				case errMsg := <-p.AsyncProducer.Errors():
-					if p.log.newer {
-						p.log.PErr("publish failed at %d partition %d offset text %s reason %s", errMsg.Msg.Partition, errMsg.Msg.Offset, errMsg.Msg.Value, errMsg.Err.Error())
-					} else {
-						p.log.Ptrace("publish failed at %d partition %d offset text %s reason %s", errMsg.Msg.Partition, errMsg.Msg.Offset, errMsg.Msg.Value, errMsg.Err.Error())
-					}
+					p.log.PErr("publish failed at %d partition %d offset text %s reason %s", errMsg.Msg.Partition, errMsg.Msg.Offset, errMsg.Msg.Value, errMsg.Err.Error())
 				}
 			}
 		}(p)
@@ -123,21 +116,13 @@ func (p *MyProducter) syncPublish(topic, value string, key []string) (partition 
 
 	if err != nil {
 		// 记错误日志
-		if p.log.newer {
-			p.log.PErr("publish failed at %d partition %d offset text %s reason %s", partition, offset, value, err.Error())
-		} else {
-			p.log.Ptrace("publish failed at %d partition %d offset text %s reason %s", partition, offset, value, err.Error())
-		}
+		p.log.PErr("publish failed at %d partition %d offset text %s reason %s", partition, offset, value, err.Error())
 		return
 	}
 
 	// 如果要打成功日志
 	if p.SuccLog {
-		if p.log.newer {
-			p.log.PInfo("publish succ at %d partition %d offset text %s", partition, offset, value)
-		} else {
-			p.log.Ptrace("publish succ at %d partition %d offset text %s ", partition, offset, value)
-		}
+		p.log.PInfo("publish succ at %d partition %d offset text %s", partition, offset, value)
 	}
 	return
 }
@@ -160,6 +145,4 @@ func (p *MyProducter) asyncPublish(topic, value string, key []string) {
 // SetLogger ... 使用自定的日志器
 func (p *MyProducter) SetLogger(logger *Logger) {
 	p.log = logger
-	p.log.debug = p.Debug
-	p.log.newer = true
 }
