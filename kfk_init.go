@@ -16,9 +16,7 @@ var (
 // PInit ...
 // @path: 配置文件路径
 func PInit(path string) error {
-
 	PS = make(map[string]*MyProducter)
-
 	// 读取文件
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -39,5 +37,14 @@ func PInit(path string) error {
 			PS[v.Alias] = &v
 		}
 	}
+	return nil
+}
+
+// PInitWithConf 通过配置文件初始化
+func PInitWithConf(c *MyProducter) error {
+	if err := c.Dial(); err != nil {
+		return err
+	}
+	P = c
 	return nil
 }
