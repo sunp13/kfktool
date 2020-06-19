@@ -47,13 +47,15 @@ func (c *MyConsumer) Consumer(fn func(msg *sarama.ConsumerMessage) error) {
 
 	for i := 0; i < c.count; i++ {
 		wg.Add(1)
-		go c.consum(config, i, fn)
+		go c.consum(wg, config, i, fn)
 	}
 
 	wg.Wait()
 }
 
-func (c *MyConsumer) consum(conf *cluster.Config, index int, fn func(msg *sarama.ConsumerMessage) error) {
+func (c *MyConsumer) consum(w *sync.WaitGroup, conf *cluster.Config, index int, fn func(msg *sarama.ConsumerMessage) error) {
+	defer w.Done()
+
 	consumer, err := cluster.NewConsumer(c.brokers, c.groupName, c.topics, conf)
 	if err != nil {
 		c.log.CErr("consumer group %s id %d err %s", c.groupName, index, err.Error())
